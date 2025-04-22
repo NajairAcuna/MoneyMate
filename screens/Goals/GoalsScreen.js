@@ -11,16 +11,19 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import * as Progress from "react-native-progress";
 
-
 const GoalsScreen = () => {
   const [goals, setGoals] = useState([
     { name: "Laptop", target: 300, saved: 90 },
     { name: "Phone", target: 500, saved: 150 },
     { name: "Trip to NYC", target: 800, saved: 200 },
   ]);
-  const [goalModalVisible, setGoalModalVisible] = useState(false);
   const [selectedGoalIndex, setSelectedGoalIndex] = useState(0);
   const [addAmount, setAddAmount] = useState("");
+
+  const [goalModalVisible, setGoalModalVisible] = useState(false);
+  const [addGoalModalVisible, setAddGoalModalVisible] = useState(false);
+  const [newGoalName, setNewGoalName] = useState('');
+  const [newGoalAmount, setNewGoalAmount] = useState('');
 
   const selectedGoal = goals[selectedGoalIndex];
   const progress = selectedGoal.saved / selectedGoal.target;
@@ -31,11 +34,8 @@ const GoalsScreen = () => {
       const newSaved = selectedGoal.saved + numericAmount;
       const updatedGoals = [...goals];
 
-      if (newSaved <= selectedGoal.target) {
-        updatedGoals[selectedGoalIndex].saved = newSaved;
-      } else {
-        updatedGoals[selectedGoalIndex].saved = selectedGoal.target;
-      }
+      updatedGoals[selectedGoalIndex].saved =
+        newSaved <= selectedGoal.target ? newSaved : selectedGoal.target;
 
       setGoals(updatedGoals);
       setAddAmount("");
@@ -43,28 +43,118 @@ const GoalsScreen = () => {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.ScrollContent}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>🎯 Your Goals</Text>
 
       <Text style={styles.inputLabel}>Select a Goal</Text>
-      <View style={styles.section}>
+      <TouchableOpacity
+        style={styles.dropdownBox}
+        onPress={() => setGoalModalVisible(true)}
+      >
+        <Text style={styles.dropdownText}>
+          {goals[selectedGoalIndex].name}
+        </Text>
+      </TouchableOpacity>
 
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={selectedGoalIndex}
-            onValueChange={(itemValue) => setSelectedGoalIndex(itemValue)}
-            style={styles.picker}
-          >
-            {goals.map((goal, index) => (
-              <Picker.Item key={index} label={goal.name} value={index} />
-            ))}
-          </Picker>
+      {/* Select Goal Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={goalModalVisible}
+        onRequestClose={() => setGoalModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choose a Goal</Text>
+            <Picker
+              selectedValue={selectedGoalIndex}
+              onValueChange={(itemValue) => setSelectedGoalIndex(itemValue)}
+            >
+              {goals.map((goal, index) => (
+                <Picker.Item key={index} label={goal.name} value={index} />
+              ))}
+            </Picker>
+
+            <TouchableOpacity
+              style={styles.addGoalButton}
+              onPress={() => {
+                setGoalModalVisible(false);
+                setTimeout(() => setAddGoalModalVisible(true), 300);
+              }}
+            >
+              <Text style={styles.addGoalButtonText}>➕ Add New Goal</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setGoalModalVisible(false)}
+            >
+              <Text style={styles.closeModalText}>Done</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </Modal>
 
+      {/* Add New Goal Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={addGoalModalVisible}
+        onRequestClose={() => setAddGoalModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Goal</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Goal name"
+              value={newGoalName}
+              onChangeText={setNewGoalName}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Target amount"
+              value={newGoalAmount}
+              onChangeText={setNewGoalAmount}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                const amount = parseFloat(newGoalAmount);
+                if (!newGoalName || isNaN(amount) || amount <= 0) return;
+
+                const newGoal = {
+                  name: newGoalName,
+                  target: amount,
+                  saved: 0,
+                };
+
+                const updatedGoals = [...goals, newGoal];
+                setGoals(updatedGoals);
+                setSelectedGoalIndex(updatedGoals.length - 1);
+                setNewGoalName('');
+                setNewGoalAmount('');
+                setAddGoalModalVisible(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Save Goal</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setAddGoalModalVisible(false)}
+            >
+              <Text style={styles.closeModalText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Goal Info */}
       <View style={styles.section}>
         <Text style={styles.goalText}>Goal Amount: ${selectedGoal.target}</Text>
         <Text style={styles.goalText}>
@@ -73,30 +163,31 @@ const GoalsScreen = () => {
       </View>
 
       <View style={styles.section}>
-      <Progress.Bar
-        progress={progress}
-        width={null}
-        height={12}
-        color="#4CAF50"
-        unfilledColor="#eee"
-        borderRadius={6}
-        style={styles.progress}
-      />
+        <Progress.Bar
+          progress={progress}
+          width={null}
+          height={12}
+          color="#4CAF50"
+          unfilledColor="#eee"
+          borderRadius={6}
+          style={styles.progress}
+        />
       </View>
 
+      {/* Add to Savings */}
       <Text style={styles.inputLabel}>Add to Savings</Text>
       <View style={styles.section}>
-      <TextInput
-        style={styles.input}
-        placeholder="$0.00"
-        value={addAmount}
-        onChangeText={setAddAmount}
-        keyboardType="numeric"
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="$0.00"
+          value={addAmount}
+          onChangeText={setAddAmount}
+          keyboardType="numeric"
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleAddToSavings}>
-        <Text style={styles.buttonText}>Add to Savings</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleAddToSavings}>
+          <Text style={styles.buttonText}>Add to Savings</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -110,6 +201,9 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 48,
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -121,15 +215,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 6,
   },
-  pickerWrapper: {
+  dropdownBox: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
+    backgroundColor: "#fff",
   },
-  picker: {
-    height: 48,
-    width: "100%",
+  dropdownText: {
+    fontSize: 16,
+  },
+  section: {
+    marginBottom: 24,
   },
   goalText: {
     fontSize: 16,
@@ -145,6 +243,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 16,
+    backgroundColor: "fff",
   },
   button: {
     backgroundColor: "#007AFF",
@@ -157,11 +256,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  ScrollContent: {
-    paddingBottom: 40,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 20,
   },
-  section: {
-    marginBottom: 24,
-  }
-
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  addGoalButton: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  addGoalButtonText: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
+  closeModalButton: {
+    marginTop: 12,
+    alignItems: "center",
+  },
+  closeModalText: {
+    fontSize: 16,
+    color: "#007AFF",
+  },
 });
