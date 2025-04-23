@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import * as Progress from "react-native-progress";
+import ConfettiCannon from "react-native-confetti-cannon";
 
 
 const GoalsScreen = () => {
@@ -26,25 +27,49 @@ const GoalsScreen = () => {
   const [newGoalName, setNewGoalName] = useState('');
   const [newGoalAmount, setNewGoalAmount] = useState('');
   const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const selectedGoal = goals[selectedGoalIndex];
   const progress = selectedGoal.saved / selectedGoal.target;
 
   const handleAddToSavings = () => {
+    console.log('Savings button pressed');
     const numericAmount = parseFloat(addAmount);
     if (!isNaN(numericAmount) && numericAmount > 0) {
       const newSaved = selectedGoal.saved + numericAmount;
-      const updatedGoals = [...goals];
+      const isGoalReached = newSaved >= selectedGoal.target;
 
+      const updatedGoals = [...goals];
       updatedGoals[selectedGoalIndex].saved =
         newSaved <= selectedGoal.target ? newSaved : selectedGoal.target;
 
       setGoals(updatedGoals);
       setAddAmount("");
+
+      if(isGoalReached && updatedGoals[selectedGoalIndex].saved === updatedGoals[selectedGoalIndex].target) {
+        console.log('Confetti condition met')
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
     }
   };
 
   return (
+    <View style={{ flex: 1 }}>
+    {showConfetti && (
+      <ConfettiCannon
+        count={100}
+        origin={{ x: 200, y: 0 }}
+        explosionSpeed={350}
+        fallSpeed={3000}
+        fadeOut={true}
+        autoStart={true}
+      />
+      // <View style={{ position: 'absolute', top: 100, left: 50, zIndex: 9999 }}>
+      //   <Text style={{ fontSize: 32}}>Confetti here!</Text>
+      // </View>
+    )}
+
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>🎯 Your Goals</Text>
 
@@ -240,6 +265,7 @@ const GoalsScreen = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </View>
   );
 };
 
@@ -294,7 +320,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     backgroundColor: "#fff",
-
   },
   button: {
     backgroundColor: "#007AFF",
