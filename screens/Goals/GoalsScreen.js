@@ -65,9 +65,6 @@ const GoalsScreen = () => {
         fadeOut={true}
         autoStart={true}
       />
-      // <View style={{ position: 'absolute', top: 100, left: 50, zIndex: 9999 }}>
-      //   <Text style={{ fontSize: 32}}>Confetti here!</Text>
-      // </View>
     )}
 
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -114,8 +111,6 @@ const GoalsScreen = () => {
                 setGoalModalVisible(false);
                 setIsEditingGoal(false);
                 setTimeout(() => {
-                  // setNewGoalName(goals[selectedGoalIndex].name);
-                  // setNewGoalAmount(String(goals[selectedGoalIndex].target));
                   setAddGoalModalVisible(true);
                 },300);
               }}
@@ -199,19 +194,6 @@ const GoalsScreen = () => {
                 setIsEditingGoal(false);
                 setAddGoalModalVisible(false);
               }}
-                // const newGoal = {
-                //   name: newGoalName,
-                //   target: amount,
-                //   saved: 0,
-                // };
-
-            //     const updatedGoals = [...goals, newGoal];
-            //     setGoals(updatedGoals);
-            //     setSelectedGoalIndex(updatedGoals.length - 1);
-            //     setNewGoalName('');
-            //     setNewGoalAmount('');
-            //     setAddGoalModalVisible(false);
-            //   }}
             >
               <Text style={styles.buttonText}>{isEditingGoal ? 'Save Changes' : 'Save Goal'}</Text>
             </TouchableOpacity>
