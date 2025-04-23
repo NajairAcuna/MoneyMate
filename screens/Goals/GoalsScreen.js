@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,16 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import * as Progress from "react-native-progress";
 import ConfettiCannon from "react-native-confetti-cannon";
+import monteQuotes, {monteCelebrationQuotes} from "../../utils/monteQuotes";
+import { Audio } from "expo-av";
+import chaching from '../../assets/sounds/chaching.mp3';
+import confetti from '../../assets/sounds/confetti.mp3';
+import levelwin from '../../assets/sounds/levelwin.mp3';
+import airhorn from '../../assets/sounds/airhorn.mp3';
+// import explosion from '../../assets/sounds/explosion.mp3';
+// import chime from '../../assets/sounds/chime.mp3';
+// import crowdcheer from '../../assets/sounds/crowdcheer.mp3';
+
 
 
 const GoalsScreen = () => {
@@ -28,11 +38,36 @@ const GoalsScreen = () => {
   const [newGoalAmount, setNewGoalAmount] = useState('');
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [monteQuote, setMonteQuote] = useState('');
 
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: false,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
+  }, []);
+  
   const selectedGoal = goals[selectedGoalIndex];
   const progress = selectedGoal.saved / selectedGoal.target;
 
-  const handleAddToSavings = () => {
+  const playSound = async (soundFile) => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(soundFile);
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish){
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.log('Sound error', error);
+    }
+  };
+
+  const handleAddToSavings = async () => {
     console.log('Savings button pressed');
     const numericAmount = parseFloat(addAmount);
     if (!isNaN(numericAmount) && numericAmount > 0) {
@@ -45,6 +80,40 @@ const GoalsScreen = () => {
 
       setGoals(updatedGoals);
       setAddAmount("");
+
+      // Monte says ...
+     let quoteToUse;
+      if (
+        isGoalReached &&
+        selectedGoal.saved < selectedGoal.target &&
+        newSaved >= selectedGoal.target
+      ) {
+        const specialQuote = monteCelebrationQuotes[Math.floor(Math.random() * monteCelebrationQuotes.length)];
+        quoteToUse = specialQuote;
+
+        await playSound(confetti);
+
+        //bonus sound
+        const updatedGoal = updatedGoals[selectedGoalIndex];
+        if (updatedGoal.target >= 1000){
+          setTimeout(() => {
+          playSound(airhorn);
+        }, 500);
+        }
+        if (updatedGoal.target >= 5000){
+          setTimeout(() => {
+          playSound(levelwin);
+        }, 500);
+        }
+
+      } else {
+        const regularQuote = monteQuotes[Math.floor(Math.random() * monteQuotes.length)];
+        quoteToUse = regularQuote;
+        playSound(chaching);
+      }
+
+      setMonteQuote(quoteToUse);
+
 
       if(isGoalReached && updatedGoals[selectedGoalIndex].saved === updatedGoals[selectedGoalIndex].target) {
         console.log('Confetti condition met')
@@ -230,6 +299,15 @@ const GoalsScreen = () => {
           style={styles.progress}
         />
       </View>
+
+      {/* Monte's Quotes */}
+      {monteQuote !== '' && (
+        <View style={{ marginTop: 20, backgroundColor: '#e0f7fa', padding: 16, borderRadius: 12}}>
+          <Text style={{fontSize: 16, fontStyle: 'italic', color: '#00796b'}}>
+            {monteQuote}
+          </Text>
+        </View>
+      )}
 
       {/* Add to Savings */}
       <Text style={styles.inputLabel}>Add to Savings</Text>

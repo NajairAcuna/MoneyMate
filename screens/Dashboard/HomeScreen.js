@@ -34,7 +34,7 @@ const HomeScreen = ({navigation})=>{
                 borderRadius={6}
                 style={styles.progress}
             />
-            <Text style={styles.tipTitle}>💡 Gemma's Tip</Text>
+            <Text style={styles.tipTitle}>💡 Monte's Tip</Text>
             <Text style={styles.tipText}>Try bringing snacks from home to save 5$ a week!</Text>
                 <TouchableOpacity
                     onPress={()=>navigation.navigate('Transactions')}
