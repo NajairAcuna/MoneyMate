@@ -11,6 +11,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import * as Progress from "react-native-progress";
 
+
 const GoalsScreen = () => {
   const [goals, setGoals] = useState([
     { name: "Laptop", target: 300, saved: 90 },
@@ -24,6 +25,7 @@ const GoalsScreen = () => {
   const [addGoalModalVisible, setAddGoalModalVisible] = useState(false);
   const [newGoalName, setNewGoalName] = useState('');
   const [newGoalAmount, setNewGoalAmount] = useState('');
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
 
   const selectedGoal = goals[selectedGoalIndex];
   const progress = selectedGoal.saved / selectedGoal.target;
@@ -71,7 +73,13 @@ const GoalsScreen = () => {
               onValueChange={(itemValue) => setSelectedGoalIndex(itemValue)}
             >
               {goals.map((goal, index) => (
-                <Picker.Item key={index} label={goal.name} value={index} />
+                <Picker.Item 
+                key={index} 
+                label={goal.name} 
+                value={index}
+                color='#000'
+                 />
+                
               ))}
             </Picker>
 
@@ -79,12 +87,29 @@ const GoalsScreen = () => {
               style={styles.addGoalButton}
               onPress={() => {
                 setGoalModalVisible(false);
-                setTimeout(() => setAddGoalModalVisible(true), 300);
+                setIsEditingGoal(false);
+                setTimeout(() => {
+                  // setNewGoalName(goals[selectedGoalIndex].name);
+                  // setNewGoalAmount(String(goals[selectedGoalIndex].target));
+                  setAddGoalModalVisible(true);
+                },300);
               }}
             >
               <Text style={styles.addGoalButtonText}>➕ Add New Goal</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.addGoalButton}
+              onPress={() => {
+                setGoalModalVisible(false)
+                setIsEditingGoal(true);
+                setNewGoalName(goals[selectedGoalIndex].name);
+                setNewGoalAmount(String(goals[selectedGoalIndex].target));
+                setTimeout(() => setAddGoalModalVisible(true), 300);
+              }}
+            >
+              <Text style={styles.addGoalButtonText}>✏️ Edit Goal</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.closeModalButton}
               onPress={() => setGoalModalVisible(false)}
@@ -100,11 +125,14 @@ const GoalsScreen = () => {
         animationType="slide"
         transparent={true}
         visible={addGoalModalVisible}
-        onRequestClose={() => setAddGoalModalVisible(false)}
+        onRequestClose={() => {
+          setAddGoalModalVisible(false)
+          setIsEditingGoal(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Goal</Text>
+            <Text style={styles.modalTitle}>{isEditingGoal ? 'Edit Goal' : 'Add New Goal'}</Text>
 
             <TextInput
               style={styles.input}
@@ -126,27 +154,49 @@ const GoalsScreen = () => {
               onPress={() => {
                 const amount = parseFloat(newGoalAmount);
                 if (!newGoalName || isNaN(amount) || amount <= 0) return;
-
-                const newGoal = {
-                  name: newGoalName,
-                  target: amount,
-                  saved: 0,
-                };
-
-                const updatedGoals = [...goals, newGoal];
-                setGoals(updatedGoals);
-                setSelectedGoalIndex(updatedGoals.length - 1);
+                if (isEditingGoal) {
+                  const updatedGoals = [...goals];
+                  updatedGoals[selectedGoalIndex].name = newGoalName; 
+                  updatedGoals[selectedGoalIndex].target = amount;
+                  setGoals(updatedGoals);
+                } else {
+                  const newGoal = {
+                    name: newGoalName,
+                    target: amount,
+                    saved: 0,
+                  };
+                  const updatedGoals = [...goals, newGoal];
+                  setGoals(updatedGoals);
+                  setSelectedGoalIndex(updatedGoals.length - 1);
+                }
                 setNewGoalName('');
                 setNewGoalAmount('');
+                setIsEditingGoal(false);
                 setAddGoalModalVisible(false);
               }}
+                // const newGoal = {
+                //   name: newGoalName,
+                //   target: amount,
+                //   saved: 0,
+                // };
+
+            //     const updatedGoals = [...goals, newGoal];
+            //     setGoals(updatedGoals);
+            //     setSelectedGoalIndex(updatedGoals.length - 1);
+            //     setNewGoalName('');
+            //     setNewGoalAmount('');
+            //     setAddGoalModalVisible(false);
+            //   }}
             >
-              <Text style={styles.buttonText}>Save Goal</Text>
+              <Text style={styles.buttonText}>{isEditingGoal ? 'Save Changes' : 'Save Goal'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.closeModalButton}
-              onPress={() => setAddGoalModalVisible(false)}
+              onPress={() => {
+                 setAddGoalModalVisible(false)
+                 setIsEditingGoal(false);
+              }}
             >
               <Text style={styles.closeModalText}>Cancel</Text>
             </TouchableOpacity>
@@ -243,7 +293,8 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 16,
-    backgroundColor: "fff",
+    backgroundColor: "#fff",
+
   },
   button: {
     backgroundColor: "#007AFF",
